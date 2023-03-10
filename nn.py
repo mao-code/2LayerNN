@@ -13,7 +13,7 @@ output_size = 11  # Number of output neurons
 learning_rate = 1e-4  # Learning rate for the optimizer (now constant or use a decay schedule)
 
 # Self-defined input data and output data (x, y)
-sample_size = 1000
+sample_size = 2000
 batch_size = 20
 num_epochs = int(sample_size/batch_size)  # Number of epochs for training
 x = torch.randn(sample_size, input_size)
