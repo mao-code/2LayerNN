@@ -4,44 +4,35 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-# device = torch.device("mps") # only for check gpu on my m1
+device = torch.device("cpu") # only for check gpu on my m1
 
 # Define hyperparameters
-input_size = 5  # Number of input neurons
-hidden_size = 8  # Number of hidden neurons
-output_size = 11  # Number of output neurons
+# N is batch size; D_in is input dimension;
+# H is hidden dimension; D_out is output dimension.
+# dimension as well as number of neurons
+N, D_in, H, D_out = 64, 200, 11, 5
 learning_rate = 1e-4  # Learning rate for the optimizer (now constant or use a decay schedule)
 
 # Self-defined input data and output data (x, y)
-sample_size = 2000
-batch_size = 20
-num_epochs = int(sample_size/batch_size)  # Number of epochs for training
-x = torch.randn(sample_size, input_size)
-y = torch.randn(sample_size, output_size)
+x = torch.randn(N, D_in, device=device)
+y = torch.randn(N, D_out, device=device)
+num_epochs = 300  # Number of epochs for training
 
-# Splitting Dataset
-train_size = int(sample_size*0.8) # 80% of the data for training
-test_size = sample_size - train_size  # 20% of the data for testing
-train_dataset, test_dataset = torch.utils.data.random_split(torch.utils.data.TensorDataset(x, y), [train_size, test_size])
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+# Splitting dataset size
+train_size = int(num_epochs*0.8) # 80% of the data for training
+test_size = num_epochs - train_size  # 20% of the data for testing
 
-# Define the neural network architecture
-# inherit the torch.nn.Module
-class MyNeuralNet(torch.nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
-        super(MyNeuralNet, self).__init__()
-        self.hidden = torch.nn.Linear(input_size, hidden_size)
-        self.relu = torch.nn.ReLU()
-        self.output = torch.nn.Linear(hidden_size, output_size)
-        
-    def forward(self, x):
-        hidden = self.hidden(x) # input layer to hidden layer (hidden layer)
-        relu = self.relu(hidden) # activation function (hidden to output) (hidden layer)
-        output = self.output(relu) # hidden to output (output layer)
-        return output
-        
-model = MyNeuralNet(input_size, hidden_size, output_size)
+# Use the nn package to define our model as a sequence of layers. nn.Sequential
+# is a Module which contains other Modules, and applies them in sequence to
+# produce its output. Each Linear Module computes output from input using a
+# linear function, and holds internal Tensors for its weight and bias.
+# After constructing the model we use the .to() method to move it to the
+# desired device.
+model = torch.nn.Sequential(
+        torch.nn.Linear(D_in, H), # input to hidden
+        torch.nn.ReLU(), # hidden activation function
+        torch.nn.Linear(H, D_out), # hidden to output
+    ).to(device)
 
 # Define Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
@@ -58,30 +49,39 @@ def mse_loss_with_l2_regularization(pred, ans, model, l2_weight):
 
 # Training
 l2_lambda = 0.01 # L2 weight of the weight penalty strngth
-for epoch in range(num_epochs):
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
-        y_pred = model(inputs) # forward pass
-        loss = mse_loss_with_l2_regularization(y_pred, targets, model, l2_lambda) # compare the predict one and ans
+for t in range(train_size):
+    # Forward pass: compute predicted y by passing x to the model. Module objects
+    # override the __call__ operator so you can call them like functions. When
+    # doing so you pass a Tensor of input data to the Module and it produces
+    # a Tensor of output data.
+    y_pred = model(x)
 
-        loss.backward() # backward pass
-        
-        optimizer.step()
+    # Compute and print loss. We pass Tensors containing the predicted and true
+    # values of y, and the loss function returns a Tensor containing the loss.
+    loss = mse_loss_with_l2_regularization(y_pred, y, model, l2_lambda) # compare the predict one and ans
 
-        # reset the gradient to avoid accumulated gradient of next batch and epoch
-        optimizer.zero_grad() 
+    # Backward pass: compute gradient of the loss with respect to all the learnable
+    # parameters of the model. Internally, the parameters of each Module are stored
+    # in Tensors with requires_grad=True, so this call will compute gradients for
+    # all learnable parameters in the model.
+    loss.backward() # backward pass
+    
+    optimizer.step()
+    # reset the gradient to avoid accumulated gradient of next batch and epoch
+    optimizer.zero_grad() 
 
 # Testing pahase
 # Evaluate the model on the test set
 with torch.no_grad():
     model.eval()
-    for batch_idx, (inputs, targets) in enumerate(test_loader):
-        outputs = model(inputs)
-        if batch_idx == 0:
-            test_outputs = outputs
-            test_targets = targets
+    for t in range(test_size):
+        y_pred = model(x)
+        if t == 0:
+            test_outputs = y_pred
+            test_targets = y
         else:
-            test_outputs = torch.cat((test_outputs, outputs), dim=0)
-            test_targets = torch.cat((test_targets, targets), dim=0)
+            test_outputs = torch.cat((test_outputs, y_pred), dim=0)
+            test_targets = torch.cat((test_targets, y), dim=0)
 
 # Plot the testing output and target output
 # y=x line
