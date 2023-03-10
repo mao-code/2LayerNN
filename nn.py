@@ -14,9 +14,10 @@ N, D_in, H, D_out = 64, 200, 11, 5
 learning_rate = 1e-4  # Learning rate for the optimizer (now constant or use a decay schedule)
 
 # Self-defined input data and output data (x, y)
+# Create random Tensors to hold inputs and outputs
 x = torch.randn(N, D_in, device=device)
 y = torch.randn(N, D_out, device=device)
-num_epochs = 300  # Number of epochs for training
+num_epochs = 300  # Number of epochs
 
 # Splitting dataset size
 train_size = int(num_epochs*0.8) # 80% of the data for training
@@ -75,6 +76,7 @@ for t in range(train_size):
 with torch.no_grad():
     model.eval()
     for t in range(test_size):
+        print(x[0])
         y_pred = model(x)
         if t == 0:
             test_outputs = y_pred
