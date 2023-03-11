@@ -76,7 +76,6 @@ for t in range(train_size):
 with torch.no_grad():
     model.eval()
     for t in range(test_size):
-        print(x[0])
         y_pred = model(x)
         if t == 0:
             test_outputs = y_pred
