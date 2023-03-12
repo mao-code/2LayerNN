@@ -9,7 +9,9 @@ device = torch.device("cpu") # only for check gpu on my m1
 # Define hyperparameters
 # N is batch size; D_in is input dimension;
 # H is hidden dimension; D_out is output dimension.
-# dimension as well as number of neurons
+# dimension as well as shape (e.g. 3D tensor with dimension (3,4,5))
+# dimension here is flatten (e.g. (3,4,5) 3x4x5=60)
+# so dimension as well as number of neurons
 N, D_in, H, D_out = 64, 200, 11, 5
 learning_rate = 1e-4  # Learning rate for the optimizer (now constant or use a decay schedule)
 
