@@ -21,9 +21,9 @@ x = torch.randn(N, D_in, device=device)
 y = torch.randn(N, D_out, device=device)
 num_epochs = 300  # Number of epochs
 
-# Splitting dataset size
-train_size = int(num_epochs*0.8) # 80% of the data for training
-test_size = num_epochs - train_size  # 20% of the data for testing
+# Splitting dataset size (should be batch size)
+# train_size = int(num_epochs*0.8) # 80% of the data for training
+# test_size = num_epochs - train_size  # 20% of the data for testing
 
 # Use the nn package to define our model as a sequence of layers. nn.Sequential
 # is a Module which contains other Modules, and applies them in sequence to
@@ -52,7 +52,7 @@ def mse_loss_with_l2_regularization(pred, ans, model, l2_weight):
 
 # Training
 l2_lambda = 0.01 # L2 weight of the weight penalty strngth
-for t in range(train_size):
+for t in range(num_epochs):
     # Forward pass: compute predicted y by passing x to the model. Module objects
     # override the __call__ operator so you can call them like functions. When
     # doing so you pass a Tensor of input data to the Module and it produces
@@ -77,7 +77,7 @@ for t in range(train_size):
 # Evaluate the model on the test set
 with torch.no_grad():
     model.eval()
-    for t in range(test_size):
+    for t in range(num_epochs):
         y_pred = model(x)
         if t == 0:
             test_outputs = y_pred
