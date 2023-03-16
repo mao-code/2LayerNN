@@ -102,5 +102,5 @@ plt.xlabel('Target Output')
 plt.ylabel('Testing Output')
 plt.show()
         
-
-
+# Save the model as a .pt file
+torch.save(model.state_dict(), 'model.pt')
